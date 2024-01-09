@@ -1,0 +1,28 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "csvExtractor"
+client_id = "e5018ca12803b274fd169bf1c4132069"
+application_url = "https://her-trying-src-restoration.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products,read_products,write_orders,read_orders,read_customers,write_customers"
+
+[auth]
+redirect_urls = [
+  "https://her-trying-src-restoration.trycloudflare.com/auth/callback",
+  "https://her-trying-src-restoration.trycloudflare.com/auth/shopify/callback",
+  "https://her-trying-src-restoration.trycloudflare.com/api/auth/callback",
+  "https://her-trying-src-restoration.trycloudflare.com/.shopify/graphiql/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-10"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "wassimsandbox.myshopify.com"
