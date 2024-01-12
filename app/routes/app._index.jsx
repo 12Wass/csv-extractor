@@ -29,7 +29,6 @@ export const action = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
 
   let responses = [];
-  let logCSV = [];
 
   for await (const trx of transactions) {
     // If trx.order : search directly for the right order
@@ -94,7 +93,6 @@ export const action = async ({ request }) => {
                   }
                 });
                 const orderMarked = await orderMarkAsPaid.json();
-                console.log(orderMarked);
             } else {
               console.log("Order has been paid already", singleOrderData.name)
             }
