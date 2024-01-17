@@ -29,6 +29,7 @@ export const action = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
 
   let responses = [];
+  let logArray = [];
 
   for await (const trx of transactions) {
     // If trx.order : search directly for the right order
@@ -95,13 +96,31 @@ export const action = async ({ request }) => {
                 const orderMarked = await orderMarkAsPaid.json();
             } else {
               console.log("Order has been paid already", singleOrderData.name)
+              logArray.push([
+                [singleOrderData.customer.firstName + ' ' + singleOrderData.customer.lastName],
+                [singleOrderData.createdAt],
+                [singleOrderData.name], // orderID
+                ['NOT MODIFIED : ALREADY PAID']
+              ]);
             }
             responses.push(singleOrder.data.orders.edges[0]["node"]);
           } else {
             console.log("Amount is not matching for ", trx.name, "- CSV amount : ", trx.credit, "- Expected amount : ", singleOrderData.totalPriceSet.shopMoney.amount);
+            logArray.push([
+              [singleOrderData.customer.firstName + ' ' + singleOrderData.customer.lastName],
+              [singleOrderData.createdAt],
+              [singleOrderData.name], // orderID
+              ['NOT MODIFIED : AMOUNT NOT MATCHING']
+            ]);
           }
         } else {
           console.log("Name is not matching for ", trx.name, "- Expected name : ", customerName)
+          logArray.push([
+            [singleOrderData.customer.firstName + ' ' + singleOrderData.customer.lastName],
+            [singleOrderData.createdAt],
+            [singleOrderData.name], // orderID
+            ['NOT MODIFIED : NAME NOT MATCHING']
+          ]);
         }
         responses.push(singleOrder.data.orders.edges[0]["node"]);
       }
@@ -151,14 +170,14 @@ export const action = async ({ request }) => {
             }`,
             {
               variables: {
-                customerId: customerId
+                customerId: customerId.node.id
               }
             }
           );
           const fullOrders = await orders.json();
           const fullName = fullOrders.data.customer.lastName.toUpperCase() + " " + fullOrders.data.customer.firstName.toUpperCase();
           if (fullName === trx.name) {
-            for (const order of fullOrders.data.orders.edges) {
+            for (const order of fullOrders.data.customer.orders.edges) {
               const getOrder = await admin.graphql(
                 `#graphql
                 query getOrderById ($orderId: ID!) {
@@ -176,11 +195,11 @@ export const action = async ({ request }) => {
                 }`,
                 {    
                   variables: {
-                    orderId: order.id
+                    orderId: order.node.id
                   }
                 }
               );
-              const loopedOrder = getOrder.json();
+              const loopedOrder = await getOrder.json();
               if (loopedOrder.displayFinancialStatus === "PENDING") {
                 if (loopedOrder.shopMoney.amount === trx.credit) {
                   const orderMarkAsPaid = await admin.graphql(
@@ -209,110 +228,19 @@ export const action = async ({ request }) => {
                 }
               } else {
                 console.log("Not good status");
+                console.log(loopedOrder);
               }
             }
           }
-        }
-
-        // OLD WAY
-        const customerId = customer.data.customers.edges[0]["node"].id;
-        const orders = await admin.graphql(
-          `#graphql
-          query getOrdersByCustomers ($customerId: ID!) {
-            customer(id: $customerId) {
-              firstName,
-              lastName,
-              orders(first: 2, query: "status:any"){
-                edges {
-                  node {
-                    id
-                  }
-                }
-              }
-            }
-          }`,
-          {
-            variables: {
-              customerId: customerId
-            }
-          }
-        );
-        const fullOrders = await orders.json();
-        const fullName = fullOrders.data.customer.lastName.toUpperCase() + " " + fullOrders.data.customer.firstName.toUpperCase();
-        // Orders has been found for the customer we just gathered
-        if (fullOrders.data.customer.orders.edges[0]) {
-          if (fullName === trx.name) {
-            const orderId = fullOrders.data.customer.orders.edges[0]["node"].id;
-            const getOrder = await admin.graphql(
-              `#graphql
-              query getOrderById ($orderId: ID!) {
-                order(id: $orderId) {
-                  name,
-                  createdAt,
-                  displayFinancialStatus,
-                  totalPriceSet {
-                    shopMoney {
-                      amount
-                      currencyCode
-                    }
-                  }
-                }
-              }`,
-              {    
-                variables: {
-                  orderId: orderId
-                }
-              }
-            );
-
-            const order = await getOrder.json();
-            orderAmount = order.data.order.totalPriceSet.shopMoney.amount;
-
-            // Now we check the value we receive
-            if (orderAmount === trx.credit) {
-              // Order has the right name / amount here
-              if (order.data.order.displayFinancialStatus === "PENDING") {
-                const multipleOrderMarkAsPaid = await admin.graphql(
-                  `#graphql
-                  mutation orderMarkAsPaid ($input: ID!) {
-                   orderMarkAsPaid(input: {id: $input}) {
-                    order {
-                      id
-                      name
-                    }
-                    userErrors {
-                      field
-                      message
-                    }
-                   } 
-                  }`,
-                  {
-                    variables: {
-                      input: order.data.order.id
-                    }
-                  });
-                  const updatedOrder = await multipleOrderMarkAsPaid.json();
-                  console.log(updatedOrder);
-              } else {
-                console.log("Order has been paid already : ", updatedOrder.name)
-              }
-              responses.push(order)
-            } else {
-              console.log("Amount is not matching for ", trx.name, "- CSV amount : ", trx.credit, "- Expected amount : ", orderAmount);
-            }
-          } else {
-            console.log("Name is not matching for ", trx.name, "- Expected name : ", fullName)
-          }
-        } else {
-          // Log that no order was found for this very user in the error array.
-          console.log('No order found for user', trx.name);
         }
       } else {
-        // Log that we couldn't find any user with the CSV informations (in the error array)
+        // Log that we couldn't find any user with the CSV informations in the error array.
         console.log('No customer found for user ', trx.name)
       }
     }
   };
+
+  console.log(logArray);
 
   return json({
     orders: responses,

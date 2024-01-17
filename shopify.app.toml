@@ -2,7 +2,7 @@
 
 name = "csvExtractor"
 client_id = "e5018ca12803b274fd169bf1c4132069"
-application_url = "https://wales-algeria-descending-dam.trycloudflare.com"
+application_url = "https://isp-packed-lotus-net.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,10 +11,10 @@ scopes = "write_products,read_products,write_orders,read_orders,read_customers,w
 
 [auth]
 redirect_urls = [
-  "https://wales-algeria-descending-dam.trycloudflare.com/auth/callback",
-  "https://wales-algeria-descending-dam.trycloudflare.com/auth/shopify/callback",
-  "https://wales-algeria-descending-dam.trycloudflare.com/api/auth/callback",
-  "https://wales-algeria-descending-dam.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://isp-packed-lotus-net.trycloudflare.com/auth/callback",
+  "https://isp-packed-lotus-net.trycloudflare.com/auth/shopify/callback",
+  "https://isp-packed-lotus-net.trycloudflare.com/api/auth/callback",
+  "https://isp-packed-lotus-net.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]
