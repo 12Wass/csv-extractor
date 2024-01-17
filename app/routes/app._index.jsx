@@ -95,7 +95,6 @@ export const action = async ({ request }) => {
                 });
                 const orderMarked = await orderMarkAsPaid.json();
             } else {
-              console.log("Order has been paid already", singleOrderData.name)
               logArray.push([
                 [singleOrderData.customer.firstName + ' ' + singleOrderData.customer.lastName],
                 [singleOrderData.createdAt],
@@ -105,7 +104,6 @@ export const action = async ({ request }) => {
             }
             responses.push(singleOrder.data.orders.edges[0]["node"]);
           } else {
-            console.log("Amount is not matching for ", trx.name, "- CSV amount : ", trx.credit, "- Expected amount : ", singleOrderData.totalPriceSet.shopMoney.amount);
             logArray.push([
               [singleOrderData.customer.firstName + ' ' + singleOrderData.customer.lastName],
               [singleOrderData.createdAt],
@@ -114,7 +112,6 @@ export const action = async ({ request }) => {
             ]);
           }
         } else {
-          console.log("Name is not matching for ", trx.name, "- Expected name : ", customerName)
           logArray.push([
             [singleOrderData.customer.firstName + ' ' + singleOrderData.customer.lastName],
             [singleOrderData.createdAt],
@@ -200,8 +197,9 @@ export const action = async ({ request }) => {
                 }
               );
               const loopedOrder = await getOrder.json();
-              if (loopedOrder.displayFinancialStatus === "PENDING") {
-                if (loopedOrder.shopMoney.amount === trx.credit) {
+              if (loopedOrder.data.order.displayFinancialStatus === "PENDING") {
+                if (loopedOrder.data.order.totalPriceSet.shopMoney.amount === trx.credit) {
+                  console.log(loopedOrder);
                   const orderMarkAsPaid = await admin.graphql(
                     `#graphql
                     mutation orderMarkAsPaid ($input: ID!) {
@@ -218,24 +216,44 @@ export const action = async ({ request }) => {
                     }`,
                     {
                       variables: {
-                        input: loopedOrder.id
+                        input: order.node.id
                       }
                     });
                   const orderMarked = await orderMarkAsPaid.json();
-                  console.log(orderMarked);
+
+                  logArray.push([
+                    [fullName],
+                    [loopedOrder.data.order.createdAt],
+                    [loopedOrder.data.order.name], // orderID
+                    ['MARKED AS PAID']
+                  ]);
                 } else {
-                  console.log("Not good amount");
+                  logArray.push([
+                    [fullName],
+                    [loopedOrder.data.order.createdAt],
+                    [loopedOrder.data.order.name], // orderID
+                    ['NOT MODIFIED : AMOUNT IS NOT MATCHING']
+                  ]);
                 }
               } else {
-                console.log("Not good status");
-                console.log(loopedOrder);
+                logArray.push([
+                  [fullName],
+                  [loopedOrder.data.order.createdAt],
+                  [loopedOrder.data.order.name], // orderID
+                  ['NOT MODIFIED : STATUS IS NOT PENDING']
+                ]);
               }
             }
           }
         }
       } else {
         // Log that we couldn't find any user with the CSV informations in the error array.
-        console.log('No customer found for user ', trx.name)
+        logArray.push([
+          [trx.name],
+          [trx.credit],
+          [trx.order], // orderID
+          ['NOT FOUND : CUSTOMER / ORDER DO NOT EXIST']
+        ]);
       }
     }
   };
