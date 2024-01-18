@@ -64,13 +64,3 @@ export const parseCSV = (stream) => {
         resolve(extractedValues);
     });
 }
-
-// TODO : Create a CSV parser to get data from object/array and turn it into CSV.
-
-export const arrayToCSV = (array, delimiter = ',') => {
-    return array
-        .map(v =>
-            v.map(x => (isNaN(x) ? `"${x.replace(/"/g, '""')}"` : x)).join(delimiter)
-          )
-          .join('\n');
-}

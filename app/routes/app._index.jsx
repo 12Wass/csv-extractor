@@ -18,6 +18,7 @@ import {
 import { authenticate } from "../shopify.server";
 import { parseCSV } from "../csv.server";
 
+let logArray = [];
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -29,7 +30,6 @@ export const action = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
 
   let responses = [];
-  let logArray = [];
 
   for await (const trx of transactions) {
     // If trx.order : search directly for the right order
@@ -258,12 +258,22 @@ export const action = async ({ request }) => {
     }
   };
 
-  console.log(logArray);
+  /// PUT SOMETHING HERE TO DOWNLOAD THE CSV LOCALLY PLS OR RETURN IT
 
   return json({
-    orders: responses,
+    orders: logArray
   });
+}
 
+const saveFile = async (text) => {
+  const blob = new Blob(text, { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.download = 'my-file.txt';
+  a.href = URL.createObjectURL(blob);
+  a.addEventListener('click', (e) => {
+    URL.revokeObjectURL(a.href)
+  });
+  a.click();
 }
 
 export default function Index() {
@@ -309,7 +319,7 @@ export default function Index() {
                     overflowX="scroll"
                   >
                     <pre style={{ margin: 0 }}>
-                    <code>{JSON.stringify(actionData.orders, null, 2)}</code>
+                    <Button onClick={saveFile(actionData.orders)}>Download CSV log</Button>
                     </pre>
                   </Box>
                 )}

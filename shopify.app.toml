@@ -2,7 +2,7 @@
 
 name = "csvExtractor"
 client_id = "e5018ca12803b274fd169bf1c4132069"
-application_url = "https://pf-indicate-prior-circle.trycloudflare.com"
+application_url = "https://initial-ended-european-intervention.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,10 +11,10 @@ scopes = "write_products,read_products,write_orders,read_orders,read_customers,w
 
 [auth]
 redirect_urls = [
-  "https://pf-indicate-prior-circle.trycloudflare.com/auth/callback",
-  "https://pf-indicate-prior-circle.trycloudflare.com/auth/shopify/callback",
-  "https://pf-indicate-prior-circle.trycloudflare.com/api/auth/callback",
-  "https://pf-indicate-prior-circle.trycloudflare.com/.shopify/graphiql/auth/callback"
+  "https://initial-ended-european-intervention.trycloudflare.com/auth/callback",
+  "https://initial-ended-european-intervention.trycloudflare.com/auth/shopify/callback",
+  "https://initial-ended-european-intervention.trycloudflare.com/api/auth/callback",
+  "https://initial-ended-european-intervention.trycloudflare.com/.shopify/graphiql/auth/callback"
 ]
 
 [webhooks]
