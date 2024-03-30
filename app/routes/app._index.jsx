@@ -1,7 +1,6 @@
 // app._index.jsx (already existing)
 
 import { useRef } from "react";
-import { json } from "@remix-run/node";
 import { useActionData, useNavigation, useSubmit } from "@remix-run/react";
 import {
   Page,
@@ -16,9 +15,9 @@ import {
   InlineStack,
 } from "@shopify/polaris";
 import { authenticate } from "../shopify.server";
-import { parseCSV } from "../csv.server";
+import { parseCSV, jsonToCsv } from "../csv.server";
 
-let logArray = [];
+let logArray = [[["name"], ["amount"], ["orderId"], ["status"]]];
 
 export const loader = async ({ request }) => {
   await authenticate.admin(request);
@@ -259,21 +258,18 @@ export const action = async ({ request }) => {
   };
 
   /// PUT SOMETHING HERE TO DOWNLOAD THE CSV LOCALLY PLS OR RETURN IT
+  const result = jsonToCsv(logArray);
+  console.log(logArray);
+  return new Response(result, {
+    headers: {
+      'Content-Disposition': 'informations.csv',
+      'Content-Type': 'application/csv',
+   }
+});
 
-  return json({
-    orders: logArray
-  });
-}
-
-const saveFile = async (text) => {
-  const blob = new Blob(text, { type: 'text/csv' });
-  const a = document.createElement('a');
-  a.download = 'my-file.txt';
-  a.href = URL.createObjectURL(blob);
-  a.addEventListener('click', (e) => {
-    URL.revokeObjectURL(a.href)
-  });
-  a.click();
+  // return json({
+  //   orders: logArray
+  // });
 }
 
 export default function Index() {
@@ -284,6 +280,20 @@ export default function Index() {
   const isLoading =
     ["loading", "submitting"].includes(nav.state) && nav.formMethod === "POST";
 
+  const downloadFile = () => {
+    const blob = new Blob([actionData], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'data.csv';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    
+    URL.revokeObjectURL(url);
+  }
   const parseCsv = () => submit(formRef.current, { replace: true, method: "POST", encType: 'multipart/form-data' });
 
   return (
@@ -309,7 +319,7 @@ export default function Index() {
                     <Button onClick={parseCsv}>Envoyer le CSV</Button>
                   </form>
                 </InlineStack>
-                {actionData?.orders && (
+                {actionData && (
                   <Box
                     padding="400"
                     background="bg-surface-active"
@@ -319,7 +329,7 @@ export default function Index() {
                     overflowX="scroll"
                   >
                     <pre style={{ margin: 0 }}>
-                    <Button onClick={saveFile(actionData.orders)}>Download CSV log</Button>
+                    <Button onClick={downloadFile}>Download CSV log</Button>
                     </pre>
                   </Box>
                 )}
